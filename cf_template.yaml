@@ -11,8 +11,12 @@ Parameters:
     Description: SSH Key
 
 # Requirement 2.1
+  S3BucketName:
+    Type: String
 #
 # Requirement 2.2
+  EnvValue:
+    Type: String
 
 Resources:
 
@@ -53,6 +57,10 @@ Resources:
           ToPort: 22
           CidrIp: 0.0.0.0/0 
       # Requirement 2.3
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
 
   EC2Instance:
     Type: AWS::EC2::Instance
@@ -61,7 +69,7 @@ Resources:
       KeyName: !Ref KeyName
 
       # Requirement 2.4
-      ImageId: ""  # Ubuntu 22.04 (update for us-west-2 region)
+      ImageId: ami-0685c90b40d39e754  # Ubuntu 22.04 (update for us-west-2 region)
 
       IamInstanceProfile: !Ref InstanceProfile
       SecurityGroupIds:
@@ -74,13 +82,19 @@ Resources:
           apt install -y python3 python3-pip awscli
 
           # Requirement 2.5.1
+          mkdir -p /home/ubuntu/app
+          cd /home/ubuntu/app
 
           # Requirement 2.5.2
+          aws s3 cp s3://${S3BucketName}/application.py /home/ubuntu/app/application.py
+          aws s3 cp s3://${S3BucketName}/requirements.txt /home/ubuntu/app/requirements.txt
 
           # Requirement 2.5.3
+          pip3 install -r requirements.txt
 
           # Set environment variable
           # Requirement 2.5.4
+          export MY_ENV_VAR=${EnvValue}
 
           # Run app
           nohup python3 application.py > app.log 2>&1 &
